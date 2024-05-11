@@ -1,0 +1,41 @@
+// Torsten Sadowski
+// SPDX-License-Identifier:  GPL-3.0-or-later
+
+import { ComboBox, GridBox, ListView, ScrollView, VerticalBox, Button } from "std-widgets.slint";
+
+import { UiSettings } from "settings.slint";
+
+export global PageCallback {
+    pure callback get_current_setting() -> int;
+    pure callback get_available_settings() -> [string];
+}
+
+export component Page inherits VerticalBox {
+    in property<string> title: "title";
+    in property<string> description: "description";
+
+    HorizontalLayout {
+        height: 24px;
+
+        Text {
+            font-size: 20px;
+            text <=> root.title;
+        }
+
+        Button {
+            text: @tr("Edit Settings");
+        }
+
+        // Spacer
+        Rectangle {}
+
+        ComboBox {
+            horizontal-stretch: 0;
+            current-index <=> UiSettings.current-setting;
+            model <=> UiSettings.available-settings;
+            enabled: true;
+        }
+    }
+
+    @children
+}

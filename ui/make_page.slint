@@ -1,0 +1,112 @@
+// Torsten Sadowski
+// SPDX-License-Identifier:  GPL-3.0-or-later
+
+import { Button, GroupBox, SpinBox, ComboBox, CheckBox, LineEdit, TabWidget, VerticalBox, HorizontalBox,
+    Slider, ProgressIndicator, SpinBox, Switch, Spinner, GridBox } from "std-widgets.slint";
+import { UiSettings } from "settings.slint";
+import { Page } from "page.slint";
+
+export global MakePageCallback {
+    pure callback url_edited(string) -> string;
+    pure callback used_text_edited(string, string) -> string;
+    pure callback pw_edited(string) -> string;
+}
+
+
+export component MakePage inherits Page {
+    title: @tr("Controls");
+    description: @tr("This page gives an overview of the default widget set provided by Slint. The widgets are available in different styles native, fluent-(dark/light) and material-(dark/light). The widgets can be imported from \"std-widgets.slint\".");
+
+    callback set_passwords();
+    set_passwords() => {
+        UiSettings.pw_created = MakePageCallback.used_text_edited(UiSettings.usedtext, UiSettings.master_pw);
+        UiSettings.pw_verification = MakePageCallback.pw_edited(UiSettings.master_pw);
+    }
+
+    GroupBox {
+        vertical-stretch: 0;
+        title: @tr("Url");
+
+        VerticalLayout {
+            padding: 0px;
+
+            url := LineEdit {
+                placeholder-text: @tr("Enter url");
+                text <=> UiSettings.urltext;
+                edited(string) => { use_text.text = MakePageCallback.url_edited(self.text);
+                                    set_passwords() }
+            }
+        }
+    }
+
+    GroupBox {
+        vertical-stretch: 0;
+        title: @tr("Used text");
+
+        VerticalLayout {
+            padding: 0px;
+
+            use_text := LineEdit {
+                placeholder-text: @tr("Override text");
+                text <=> UiSettings.usedtext;
+                edited(string) => { set_passwords() }
+            }
+        }
+    }
+
+    GroupBox {
+        title: @tr("Master Password");
+        vertical-stretch: 0;
+
+        masterPW := LineEdit {
+            placeholder-text: @tr("Master Password");
+            text <=> UiSettings.master_pw;
+            edited(string) => { set_passwords() }
+            input-type: UiSettings.HidePW;
+        }
+
+        Button {
+            checkable: true;
+            clicked => { if (self.checked) {
+                            UiSettings.HidePW = InputType.text;
+                            }
+                         else {
+                            UiSettings.HidePW = InputType.password;
+                         }
+                        }    
+            text: self.checked ? @tr("Hide") : @tr("Show");
+
+        }
+}
+
+    GroupBox {
+        title: @tr("Master Password Verification Code");
+        vertical-stretch: 0;
+
+        verificationCode := LineEdit {
+            text <=> UiSettings.pw_verification;
+            enabled: false;
+        }
+    }
+
+    GroupBox {
+        title: @tr("Password");
+        vertical-stretch: 0;
+
+        password := LineEdit {
+            placeholder-text: @tr("Password");
+            text <=> UiSettings.pw_created;
+            enabled: false;
+        }
+
+        Button {
+            clicked => { password.select-all();
+                         password.copy();
+                         password.clear-selection(); }
+            text: @tr("Copy");
+        }
+    }
+    GroupBox {
+        vertical-stretch: 1;
+    }
+}

@@ -1,0 +1,34 @@
+// Torsten Sadowski
+// SPDX-License-Identifier:  GPL-3.0-or-later
+
+export struct PwmSlintSetting {
+    name: string,
+    hash_algorithm: string,
+    use_leet: string,
+    leet_level: string,
+    characters: string,
+    username: string,
+    modifier: string,
+    password_length: int,
+    prefix: string,
+    suffix: string,
+    use_domain: bool,
+    use_subdomain: bool,
+    use_protocol: bool,
+    use_params: bool
+    }
+
+export global UiSettings  {
+    in property <[string]> hash-algorithms;
+    in property <[string]> use-leet;
+    in property <[string]> leet-level;
+    in property <int> current-setting;
+    in property <PwmSlintSetting> setting;
+    in property <[string]> available-settings;
+    in property <InputType> HidePW: password;
+    in-out property <string> urltext;
+    in-out property <string> usedtext;
+    in-out property <string> master_pw;
+    in-out property <string> pw_created;
+    in property <string> pw_verification;
+}
