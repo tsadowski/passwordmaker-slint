@@ -87,6 +87,11 @@ export component SettingsPage inherits VerticalBox {
                 checked: UiSettings.setting.use-domain;
                 toggled => {UiSettings.setting.use-domain = self.checked;}
             }
+            chbUserinfo := CheckBox {
+                text: @tr("User Info");
+                checked: UiSettings.setting.use-userinfo;
+                toggled => {UiSettings.setting.use-userinfo = self.checked;}
+            }
         }
 
         HorizontalBox {

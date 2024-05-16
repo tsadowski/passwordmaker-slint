@@ -11,15 +11,13 @@ use once_cell::sync::Lazy;
 
 use slint::{ModelRc, SharedString, VecModel};
 
-use passwordmaker_rs::{HashAlgorithm, Hasher, HasherList, LeetLevel, PasswordMaker, SettingsError, UseLeetWhenGenerating, UseLeetWhenGeneratingDiscriminants, UrlParsing};
+use passwordmaker_rs::{HashAlgorithm, Hasher, HasherList, LeetLevel, PasswordMaker, SettingsError, UseLeetWhenGenerating, UseLeetWhenGeneratingDiscriminants, UrlParsing, ProtocolUsageMode};
 use digest::Digest;
 use md4;
 use md5;
 use sha1;
 use sha2;
 use ripemd;
-
-use regex::Regex;
 
 enum LeetError {
     ParseLeetLevelError,
@@ -62,7 +60,8 @@ struct PwmSetting {
     use_domain: bool,
     use_subdomain: bool,
     use_protocol: bool,
-    use_params: bool
+    use_params: bool,
+    use_userinfo: bool
 }
 
 impl From<PwmSlintSetting> for PwmSetting {
@@ -84,7 +83,8 @@ impl From<PwmSlintSetting> for PwmSetting {
             use_domain: item.use_domain,
             use_subdomain: item.use_subdomain,
             use_protocol: item.use_protocol,
-            use_params: item.use_params
+            use_params: item.use_params,
+            use_userinfo: item.use_userinfo
         }
     }
 }
@@ -108,7 +108,8 @@ impl From<PwmSetting> for PwmSlintSetting {
             use_domain: item.use_domain,
             use_subdomain: item.use_subdomain,
             use_protocol: item.use_protocol,
-            use_params: item.use_params
+            use_params: item.use_params,
+            use_userinfo: item.use_userinfo
         }
     }
 }
@@ -128,7 +129,8 @@ static PWM_DEFAULT: Lazy<PwmSetting> = Lazy::new(|| {
     use_domain: true,
     use_subdomain: true,
     use_protocol: false,
-    use_params: false
+    use_params: false,
+    use_userinfo: false
     };
     pwm
 });
@@ -398,56 +400,22 @@ fn create_use_leet_when_generating(use_leet: &str, leet_level: &str) -> Result<U
 }
 
 fn on_url_edited(url: SharedString) -> SharedString {
-	let rx = match Regex::new("([^:/]+://)?([^:/]+)([^#]*)") {
-        Ok(rx) => rx,
-        Err(_) => return SharedString::from("")
-    };
     let pwm = match PWM_DATA.lock() {
         Ok(pwm) => pwm,
         Err(_) => return SharedString::from("No Lock!")
     };
-
-    let caps = match rx.captures(&url) {
-        Some(caps) => caps,
-        None => return SharedString::from("Regex failed!")
-    };
-
-    let mut domain_segments = Vec::from_iter(caps.get(2)
-              .map_or("", |m| m.as_str())
-              .split(".").map(|s| String::from(s)));
-    while domain_segments.len() < 3 {
-        domain_segments.insert(0, String::new());
+    let use_protocol = if pwm.settings.get_current_setting_data().use_protocol {
+        ProtocolUsageMode::Used
     }
-		
-    let mut end_url = String::from("");
-
-    if pwm.settings.get_current_setting_data().use_protocol {
-        end_url += caps.get(1).map_or("", |m| m.as_str());
-    }
-    
-    if pwm.settings.get_current_setting_data().use_subdomain {
-		for i in 0..domain_segments.len()-2 {
-			end_url += domain_segments[i].as_str();
-			if i+1 < domain_segments.len()-2 {
-				end_url += ".";
-               }
-		}
-	}
-		
-	if pwm.settings.get_current_setting_data().use_domain {
-		if end_url != "" && !end_url.ends_with(".") {
-            end_url += ".";
-        }
-		end_url += domain_segments[domain_segments.len()-2].as_str();
-        end_url += ".";
-        end_url += domain_segments[domain_segments.len()-1].as_str();
-	}
-		
-	if pwm.settings.get_current_setting_data().use_params {
-		end_url += caps.get(3).map_or("", |m| m.as_str());
-	}
-		
-	end_url.into()
+        else {
+            ProtocolUsageMode::Ignored
+        };
+    let urlparse = UrlParsing::new(use_protocol, 
+        pwm.settings.get_current_setting_data().use_userinfo, 
+        pwm.settings.get_current_setting_data().use_subdomain, 
+        pwm.settings.get_current_setting_data().use_domain, 
+        pwm.settings.get_current_setting_data().use_params);
+    urlparse.parse(url.as_str()).into()
 }
 
 
