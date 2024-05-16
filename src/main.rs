@@ -42,7 +42,8 @@ enum PwmConfigError {
     FailOpenForWrite,
     FailWrite,
     FailOpenForRead,
-    FailRead
+    FailRead,
+    Str2Toml
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -263,7 +264,7 @@ trait PwmGui<'a> {
     const DEFAULT: &'a str = "default";
     fn new() -> Self;
     fn create_settings(&mut self);
-    fn load_settings(&mut self);
+    fn load_settings(&mut self) -> Result<(), PwmConfigError>;
     fn save_settings(&mut self) -> Result<(), PwmConfigError>;
     fn pwm_from_setting(&'a mut self) -> Result<Pwm<'a>, PwmSettingsError>;
     fn create_password(&mut self, url: String, master: String) -> String;
@@ -285,24 +286,29 @@ fn create_settings(&mut self) {
     }
 }
 
-fn load_settings(&mut self) {
+fn load_settings(&mut self) -> Result<(), PwmConfigError> {
     let home = match get_home_dir() {
         Ok(home) => home,
-        Err(_) => { return self.create_settings() }
+        Err(_) => { self.create_settings();
+        return Err(PwmConfigError::NoHome) }
     };
     let path = format!("{}/passwordmaker.toml", home);
     let vec_u8 = match fs::read(path) {
         Ok(vec_u8) => vec_u8,
-        Err(_) => { return self.create_settings() }
+        Err(_) => { self.create_settings();
+        return Err(PwmConfigError::FailOpenForRead) }
     };
     let setstr = match std::str::from_utf8(vec_u8.as_slice()) {
         Ok(setstr) => setstr,
-        Err(_) => { return self.create_settings() }
+        Err(_) => { self.create_settings();
+        return Err(PwmConfigError::FailRead) }
     };
     self.settings = match toml::from_str(setstr) {
         Ok(settings) => settings,
-        Err(_) => { return self.create_settings() } 
+        Err(_) => { self.create_settings();
+        return Err(PwmConfigError::Str2Toml) } 
     };
+    Ok(())
 }
 
 fn save_settings(&mut self) -> Result<(), PwmConfigError> {
@@ -502,10 +508,13 @@ fn get_vecmodel_from_enum(enum_variant_names: &[&str]) -> ModelRc<SharedString> 
 }
 
 fn main() -> Result<(), PwmConfigError> {
-    match PWM_DATA.lock() {
-        Ok(mut pwm) => pwm.load_settings(),
-        Err(_) => {}
-    }
+    let _error = match PWM_DATA.lock() {
+        Ok(mut pwm) => match pwm.load_settings() {
+            Ok(_) => Ok(()),
+            Err(e) => Err(e)
+        },
+        Err(_) => return Err(PwmConfigError::NoLock)
+    };
     let app = match App::new() {
         Ok(app) => app,
         Err(_) => return Err(PwmConfigError::NoApp)
