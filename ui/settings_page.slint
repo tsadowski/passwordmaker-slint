@@ -4,30 +4,36 @@
 import { Button, GroupBox, SpinBox, ComboBox, CheckBox, LineEdit, VerticalBox, HorizontalBox,
     GridBox } from "std-widgets.slint";
 import { UiSettings, PwmSlintSetting } from "settings.slint";
-import { Page, PageCallback } from "page.slint";
+//import { PageCallback } from "page.slint";
 
 export global SettingsPageCallback {
     pure callback model_add_setting(string);
     pure callback model_delete_setting();
     pure callback get_setting_data() -> PwmSlintSetting;
+    pure callback set_setting_data(PwmSlintSetting);
+    pure callback get_current_setting() -> int;
+    pure callback set_current_setting(int);
+    pure callback get_available_settings() -> [string];
 }
 
-export component SettingsPage inherits Page {
-    title: @tr("Settings");
-    description: @tr("This page gives an overview of the default widget set provided by Slint. The widgets are available in different styles native, fluent-(dark/light) and material-(dark/light). The widgets can be imported from \"std-widgets.slint\".");
+export component SettingsPage inherits VerticalBox {
+    //title: @tr("Settings");
+    //description: @tr("This page gives an overview of the default widget set provided by Slint. The widgets are available in different styles native, fluent-(dark/light) and material-(dark/light). The widgets can be imported from \"std-widgets.slint\".");
 
     callback add_setting(string);
     callback delete_setting();
+    callback update_settings(PwmSlintSetting);
+    callback collect_settings() -> PwmSlintSetting;
     add_setting(string) => {
         SettingsPageCallback.model_add_setting(string);
-        UiSettings.available-settings = PageCallback.get_available_settings();
-        UiSettings.current-setting = PageCallback.get_current_setting();
-        UiSettings.setting = SettingsPageCallback.get_setting_data()
+        UiSettings.available-settings = SettingsPageCallback.get_available_settings();
+        UiSettings.current-setting = SettingsPageCallback.get_current_setting();
+        UiSettings.setting = SettingsPageCallback.get_setting_data();
     }
     delete_setting() => {
         SettingsPageCallback.model_delete_setting();
-        UiSettings.available-settings = PageCallback.get_available_settings();
-        UiSettings.current-setting = PageCallback.get_current_setting();
+        UiSettings.available-settings = SettingsPageCallback.get_available_settings();
+        UiSettings.current-setting = SettingsPageCallback.get_current_setting();
         UiSettings.setting = SettingsPageCallback.get_setting_data()
     }
     GroupBox {
@@ -45,7 +51,7 @@ export component SettingsPage inherits Page {
                 LineEdit {
                     placeholder-text: @tr("Profile Name");
                     text: UiSettings.setting.name;
-                    edited(string) => { UiSettings.setting.name = self.text }
+                    edited => {UiSettings.setting.name = self.text}
                 }
 
                 Button {
@@ -68,22 +74,26 @@ export component SettingsPage inherits Page {
 
             chbProtocol := CheckBox {
                 text: @tr("Protocol");
-                checked: false;
+                checked: UiSettings.setting.use-protocol;
+                toggled => {UiSettings.setting.use-protocol = self.checked;}
             }
             chbSubdomain := CheckBox {
                 text: @tr("Subdomain");
-                checked: false;
+                checked: UiSettings.setting.use-subdomain;
+                toggled => {UiSettings.setting.use-subdomain = self.checked;}
             }
             chbDomain := CheckBox {
                 text: @tr("Domain");
-                checked: true;
+                checked: UiSettings.setting.use-domain;
+                toggled => {UiSettings.setting.use-domain = self.checked;}
             }
         }
 
         HorizontalBox {
             chbPortPath := CheckBox {
                 text: @tr("Port, path, anchor, query parameters");
-                checked: false;
+                checked: UiSettings.setting.use-params;
+                toggled => {UiSettings.setting.use-params = self.checked;}
             }
         }
     }
@@ -161,13 +171,15 @@ HorizontalBox {
     GroupBox {
         title: @tr("Password Prefix");
         LineEdit {
-
+            text: UiSettings.setting.prefix;
+            edited => {UiSettings.setting.prefix = self.text}
         }
     }
     GroupBox {
         title: @tr("Password Suffix");
         LineEdit {
-
+            text: UiSettings.setting.suffix;
+            edited => {UiSettings.setting.suffix = self.text}
         }
     }
 }
@@ -175,7 +187,8 @@ HorizontalBox {
         title: @tr("User Name");
         vertical-stretch: 0;
         LineEdit {
-
+            text: UiSettings.setting.username;
+            edited => {UiSettings.setting.username = self.text}
         }
     }
 
@@ -183,7 +196,8 @@ HorizontalBox {
         title: @tr("Modifier");
         vertical-stretch: 0;
         LineEdit {
-
+            text: UiSettings.setting.modifier;
+            edited => {UiSettings.setting.modifier = self.text}
         }
     }
 }

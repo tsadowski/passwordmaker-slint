@@ -11,7 +11,7 @@ use once_cell::sync::Lazy;
 
 use slint::{ModelRc, SharedString, VecModel};
 
-use passwordmaker_rs::{HashAlgorithm, Hasher, HasherList, LeetLevel, PasswordMaker, SettingsError, UseLeetWhenGenerating, UseLeetWhenGeneratingDiscriminants};
+use passwordmaker_rs::{HashAlgorithm, Hasher, HasherList, LeetLevel, PasswordMaker, SettingsError, UseLeetWhenGenerating, UseLeetWhenGeneratingDiscriminants, UrlParsing};
 use digest::Digest;
 use md4;
 use md5;
@@ -210,6 +210,7 @@ trait PwmSettingsAccess {
     fn add_setting(&mut self, name: String);
     fn delete_setting(&mut self);
     fn get_current_setting_data(&self) -> &PwmSetting;
+    fn set_current_setting_data(&mut self, setting: PwmSetting);
 }
 
 impl PwmSettingsAccess for PwmSettings {
@@ -240,6 +241,12 @@ impl PwmSettingsAccess for PwmSettings {
         match self.settings.get(self.current_setting) {
             Some(pwms) => pwms,
             None => once_cell::sync::Lazy::<PwmSetting>::force(&PWM_DEFAULT)
+        }
+    }
+    fn set_current_setting_data(&mut self, setting: PwmSetting) {
+        match self.settings.get_mut(self.current_setting) {
+            Some(pwms) => *pwms = setting,
+            None => return
         }
     }
 }
@@ -467,6 +474,16 @@ fn on_get_current_setting() -> i32 {
     }
 }
 
+fn on_set_current_setting(current_setting: i32) {
+    match PWM_DATA.lock() {
+        Ok(mut pwm) => match current_setting.try_into() {
+            Ok(cs) => pwm.settings.current_setting = cs,
+            Err(_) => pwm.settings.current_setting = 0
+        },
+        Err(_) => ()
+    }
+}
+
 fn on_get_available_settings() -> ModelRc<SharedString> {
     let setting_names = match PWM_DATA.lock() {
         Ok(pwm) => Vec::from_iter(pwm.settings.settings.clone().into_iter()
@@ -503,6 +520,13 @@ fn on_get_setting_data() -> PwmSlintSetting {
     }
 }
 
+fn on_set_setting_data(setting: PwmSlintSetting) {
+    match PWM_DATA.lock() {
+        Ok(mut pwm) => pwm.settings.set_current_setting_data(setting.into()),
+        Err(_) => return
+    }
+}
+
 fn get_vecmodel_from_enum(enum_variant_names: &[&str]) -> ModelRc<SharedString> {
     let enum_names = Vec::from_iter(enum_variant_names.into_iter().map(|s| SharedString::from(*s)));
     let vm_enum_names = VecModel::from(enum_names);
@@ -527,10 +551,13 @@ fn main() -> Result<(), PwmConfigError> {
     app.global::<MakePageCallback>().on_url_edited(|url| { on_url_edited(url)});
     app.global::<MakePageCallback>().on_used_text_edited(|url, master| { on_used_text_edited(url, master)});
     app.global::<MakePageCallback>().on_pw_edited(|master| { on_pw_edited(master)});
-    app.global::<PageCallback>().on_get_current_setting(|| {on_get_current_setting()});
-    app.global::<PageCallback>().on_get_available_settings(|| {on_get_available_settings()});
+    app.global::<SettingsPageCallback>().on_get_current_setting(|| {on_get_current_setting()});
+    app.global::<SettingsPageCallback>().on_set_current_setting(|cs| {on_set_current_setting(cs)});
+    app.global::<SettingsPageCallback>().on_get_available_settings(|| {on_get_available_settings()});
     app.global::<SettingsPageCallback>().on_model_add_setting(|setting_name| {on_model_add_setting(setting_name)});
     app.global::<SettingsPageCallback>().on_model_delete_setting(|| {on_model_delete_setting()});
+    app.global::<SettingsPageCallback>().on_get_setting_data(|| {on_get_setting_data()});
+    app.global::<SettingsPageCallback>().on_set_setting_data(|setting| {on_set_setting_data(setting)});
     match app.run() {
         Ok(_) => (),
         Err(_) => return Err(PwmConfigError::NoApp)

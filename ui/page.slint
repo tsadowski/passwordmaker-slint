@@ -4,26 +4,40 @@
 import { ComboBox, GridBox, ListView, ScrollView, VerticalBox, Button } from "std-widgets.slint";
 
 import { UiSettings } from "settings.slint";
-
-export global PageCallback {
-    pure callback get_current_setting() -> int;
-    pure callback get_available_settings() -> [string];
-}
+import { MakePage } from "make_page.slint";
+import { SettingsPage, SettingsPageCallback } from "settings_page.slint";
 
 export component Page inherits VerticalBox {
     in property<string> title: "title";
     in property<string> description: "description";
+    in-out property<bool> edit-settings: false;
 
     HorizontalLayout {
-        height: 24px;
-
-        Text {
-            font-size: 20px;
-            text <=> root.title;
+        height: 60px;
+        padding: 5px;
+        HorizontalLayout {
+        alignment: start;
+        width: 60px;
+        Image {
+            source: @image-url("../img/ring-256x256.png");
         }
+    }
+        HorizontalLayout {
+            alignment: end;
 
         Button {
+            visible: edit-settings;
+            text: @tr("Cancel");
+            clicked => { edit-settings = !edit-settings;
+                         btnEdit.text = @tr("Edit Settings");}
+                    }
+        btnEdit := Button {
             text: @tr("Edit Settings");
+            clicked => { edit-settings = !edit-settings;
+                         if (edit-settings) { self.text = @tr("Ok");}
+                         else {self.text = @tr("Edit Settings");
+                        SettingsPageCallback.set_setting_data(UiSettings.setting);}
+                    }
         }
 
         // Spacer
@@ -33,9 +47,18 @@ export component Page inherits VerticalBox {
             horizontal-stretch: 0;
             current-index <=> UiSettings.current-setting;
             model <=> UiSettings.available-settings;
+            selected(string) => {
+                UiSettings.current-setting = self.current-index;
+                SettingsPageCallback.set_current_setting(self.current-index);
+                UiSettings.setting = SettingsPageCallback.get_setting_data();
+            }
             enabled: true;
         }
     }
+    }
+
+    if (!edit-settings): MakePage {}
+    if (edit-settings): SettingsPage {}
 
     @children
 }
