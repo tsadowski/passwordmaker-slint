@@ -3,8 +3,10 @@
 
 slint::include_modules!();
 
+mod pwm_settings;
+use crate::pwm_settings::{PwmSetting, PwmSettings, PwmSettingsAccess, PWM_DEFAULT};
+
 use once_cell::sync::Lazy;
-use serde::{Deserialize, Serialize};
 use std::{
     env::{var, VarError},
     fs::{self, File},
@@ -38,7 +40,6 @@ enum LeetError {
 #[derive(Display)]
 enum PwmSettingsError {
     Ok,
-    NoSetting,
     HashAlgorithmError { error: ParseError },
     LeetError { error: LeetError },
     SettingsError { error: SettingsError },
@@ -56,96 +57,6 @@ enum PwmConfigError {
     FailRead,
     Str2Toml,
 }
-
-#[derive(Clone, Serialize, Deserialize)]
-struct PwmSetting {
-    name: String,
-    hash_algorithm: String,
-    use_leet: String,
-    leet_level: String,
-    characters: String,
-    username: String,
-    modifier: String,
-    password_length: usize,
-    prefix: String,
-    suffix: String,
-    use_domain: bool,
-    use_subdomain: bool,
-    use_protocol: bool,
-    use_params: bool,
-    use_userinfo: bool,
-}
-
-impl From<PwmSlintSetting> for PwmSetting {
-    fn from(item: PwmSlintSetting) -> PwmSetting {
-        PwmSetting {
-            name: item.name.into(),
-            hash_algorithm: item.hash_algorithm.into(),
-            use_leet: item.use_leet.into(),
-            leet_level: item.leet_level.into(),
-            characters: item.characters.into(),
-            username: item.username.into(),
-            modifier: item.modifier.into(),
-            password_length: match item.password_length.try_into() {
-                Ok(pwl) => pwl,
-                Err(_) => 0,
-            },
-            prefix: item.prefix.into(),
-            suffix: item.suffix.into(),
-            use_domain: item.use_domain,
-            use_subdomain: item.use_subdomain,
-            use_protocol: item.use_protocol,
-            use_params: item.use_params,
-            use_userinfo: item.use_userinfo,
-        }
-    }
-}
-
-impl From<PwmSetting> for PwmSlintSetting {
-    fn from(item: PwmSetting) -> PwmSlintSetting {
-        PwmSlintSetting {
-            name: item.name.into(),
-            hash_algorithm: item.hash_algorithm.into(),
-            use_leet: item.use_leet.into(),
-            leet_level: item.leet_level.into(),
-            characters: item.characters.into(),
-            username: item.username.into(),
-            modifier: item.modifier.into(),
-            password_length: match item.password_length.try_into() {
-                Ok(pwl) => pwl,
-                Err(_) => 0,
-            },
-            prefix: item.prefix.into(),
-            suffix: item.suffix.into(),
-            use_domain: item.use_domain,
-            use_subdomain: item.use_subdomain,
-            use_protocol: item.use_protocol,
-            use_params: item.use_params,
-            use_userinfo: item.use_userinfo,
-        }
-    }
-}
-
-static PWM_DEFAULT: Lazy<PwmSetting> = Lazy::new(|| {
-    let pwm = PwmSetting {
-        name: <PwmGuiData as PwmGui>::DEFAULT.to_string(),
-    hash_algorithm: String::from("Md5"),
-    use_leet: String::from("NotAtAll"),
-    leet_level: String::from(""),
-    characters: String::from("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789`~!@#$%^&*()_-+={}|[]\\:\";'<>?,./"),
-    username: String::from(""),
-    modifier: String::from(""),
-    password_length: 8,
-    prefix: String::from(""), 
-    suffix: String::from(""),
-    use_domain: true,
-    use_subdomain: true,
-    use_protocol: false,
-    use_params: false,
-    use_userinfo: false
-    };
-    pwm
-});
 
 static PWM_DATA: Lazy<Mutex<PwmGuiData>> = Lazy::new(|| {
     Mutex::new({
@@ -215,62 +126,6 @@ fn get_home_dir() -> Result<String, VarError> {
     }
 }
 
-#[derive(Serialize, Deserialize)]
-struct PwmSettings {
-    settings: Vec<PwmSetting>,
-    current_setting: usize,
-}
-
-trait PwmSettingsAccess {
-    fn new() -> Self;
-    fn add_setting(&mut self, name: String);
-    fn delete_setting(&mut self);
-    fn get_current_setting_data(&self) -> &PwmSetting;
-    fn set_current_setting_data(&mut self, setting: PwmSetting);
-}
-
-impl PwmSettingsAccess for PwmSettings {
-    fn new() -> Self {
-        let ps = PwmSettings {
-            settings: Vec::new(),
-            current_setting: 0,
-        };
-        ps
-    }
-    fn add_setting(&mut self, name: String) {
-        self.settings
-            .push(once_cell::sync::Lazy::<PwmSetting>::force(&PWM_DEFAULT).clone());
-        if let Some(setting) = self.settings.last_mut() {
-            setting.name = name;
-        }
-        self.current_setting = self.settings.len() - 1;
-    }
-    fn delete_setting(&mut self) {
-        if self.settings.is_empty() {
-            return;
-        };
-        if self.current_setting >= self.settings.len() {
-            self.current_setting = self.settings.len() - 1;
-        }
-        self.settings.remove(self.current_setting);
-        if self.current_setting >= self.settings.len() {
-            self.current_setting = self.settings.len() - 1;
-        }
-    }
-    fn get_current_setting_data(&self) -> &PwmSetting {
-        match self.settings.get(self.current_setting) {
-            Some(pwms) => pwms,
-            None => once_cell::sync::Lazy::<PwmSetting>::force(&PWM_DEFAULT),
-        }
-    }
-    fn set_current_setting_data(&mut self, setting: PwmSetting) {
-        match self.settings.get_mut(self.current_setting) {
-            Some(pwms) => *pwms = setting,
-            None => return,
-        }
-    }
-}
-
 struct PwmGuiData {
     settings: PwmSettings,
     settings_error: PwmSettingsError,
@@ -278,7 +133,6 @@ struct PwmGuiData {
 }
 
 trait PwmGui<'a> {
-    const DEFAULT: &'a str = "default";
     fn new() -> Self;
     fn create_settings(&mut self);
     fn load_settings(&mut self) -> Result<(), PwmConfigError>;
@@ -297,10 +151,7 @@ impl<'a> PwmGui<'a> for PwmGuiData {
     }
 
     fn create_settings(&mut self) {
-        self.settings
-            .settings
-            .push(once_cell::sync::Lazy::<PwmSetting>::force(&PWM_DEFAULT).clone());
-        self.settings.current_setting = 0;
+        self.settings.add_setting();
         self.settings_error = match self.pwm_from_setting() {
             Ok(_) => {
                 return;
@@ -370,12 +221,7 @@ impl<'a> PwmGui<'a> for PwmGuiData {
     }
 
     fn pwm_from_setting(&'a mut self) -> Result<Pwm<'a>, PwmSettingsError> {
-        let setting = match self.settings.settings.get(self.settings.current_setting) {
-            Some(setting) => setting,
-            None => {
-                return Err(PwmSettingsError::NoSetting);
-            }
-        };
+        let setting = self.settings.get_current_setting_data();
         let hash_algo = match HashAlgorithm::from_str(&setting.hash_algorithm) {
             Ok(hash_algo) => hash_algo,
             Err(e) => return Err(PwmSettingsError::HashAlgorithmError { error: e }),
@@ -458,6 +304,56 @@ fn create_use_leet_when_generating(
     }
 }
 
+impl From<PwmSlintSetting> for PwmSetting {
+    fn from(item: PwmSlintSetting) -> PwmSetting {
+        PwmSetting {
+            name: item.name.into(),
+            hash_algorithm: item.hash_algorithm.into(),
+            use_leet: item.use_leet.into(),
+            leet_level: item.leet_level.into(),
+            characters: item.characters.into(),
+            username: item.username.into(),
+            modifier: item.modifier.into(),
+            password_length: match item.password_length.try_into() {
+                Ok(pwl) => pwl,
+                Err(_) => 0,
+            },
+            prefix: item.prefix.into(),
+            suffix: item.suffix.into(),
+            use_domain: item.use_domain,
+            use_subdomain: item.use_subdomain,
+            use_protocol: item.use_protocol,
+            use_params: item.use_params,
+            use_userinfo: item.use_userinfo,
+        }
+    }
+}
+
+impl From<PwmSetting> for PwmSlintSetting {
+    fn from(item: PwmSetting) -> PwmSlintSetting {
+        PwmSlintSetting {
+            name: item.name.into(),
+            hash_algorithm: item.hash_algorithm.into(),
+            use_leet: item.use_leet.into(),
+            leet_level: item.leet_level.into(),
+            characters: item.characters.into(),
+            username: item.username.into(),
+            modifier: item.modifier.into(),
+            password_length: match item.password_length.try_into() {
+                Ok(pwl) => pwl,
+                Err(_) => 0,
+            },
+            prefix: item.prefix.into(),
+            suffix: item.suffix.into(),
+            use_domain: item.use_domain,
+            use_subdomain: item.use_subdomain,
+            use_protocol: item.use_protocol,
+            use_params: item.use_params,
+            use_userinfo: item.use_userinfo,
+        }
+    }
+}
+
 fn on_url_edited(url: SharedString) -> SharedString {
     let pwm = match PWM_DATA.lock() {
         Ok(pwm) => pwm,
@@ -493,7 +389,7 @@ fn on_pw_edited(master: SharedString) -> SharedString {
 
 fn on_get_current_setting() -> i32 {
     match PWM_DATA.lock() {
-        Ok(pwm) => match pwm.settings.current_setting.try_into() {
+        Ok(pwm) => match pwm.settings.get_current_setting().try_into() {
             Ok(cs) => cs,
             Err(_) => 0,
         },
@@ -504,8 +400,8 @@ fn on_get_current_setting() -> i32 {
 fn on_set_current_setting(current_setting: i32) {
     match PWM_DATA.lock() {
         Ok(mut pwm) => match current_setting.try_into() {
-            Ok(cs) => pwm.settings.current_setting = cs,
-            Err(_) => pwm.settings.current_setting = 0,
+            Ok(cs) => pwm.settings.set_current_setting(cs),
+            Err(_) => pwm.settings.set_current_setting(0),
         },
         Err(_) => (),
     }
@@ -513,25 +409,18 @@ fn on_set_current_setting(current_setting: i32) {
 
 fn on_get_available_settings() -> ModelRc<SharedString> {
     let setting_names = match PWM_DATA.lock() {
-        Ok(pwm) => Vec::from_iter(
-            pwm.settings
-                .settings
-                .clone()
-                .into_iter()
-                .map(|s| SharedString::from(s.name.clone())),
-        ),
+        Ok(pwm) => pwm.settings.get_setting_names(),
         Err(_) => Vec::<SharedString>::new(),
     };
     let vm_setting_names = VecModel::from(setting_names);
     ModelRc::from(Rc::new(vm_setting_names))
 }
 
-fn on_model_add_setting(setting_name: SharedString) {
+fn on_model_add_setting() {
     match PWM_DATA.lock() {
         Err(_) => return,
         Ok(mut pwm) => {
-            let name: String = setting_name.into();
-            pwm.settings.add_setting(name);
+            pwm.settings.add_setting();
         }
     }
 }
@@ -606,7 +495,7 @@ fn main() -> Result<(), PwmConfigError> {
     app.global::<SettingsPageCallback>()
         .on_get_available_settings(|| on_get_available_settings());
     app.global::<SettingsPageCallback>()
-        .on_model_add_setting(|setting_name| on_model_add_setting(setting_name));
+        .on_model_add_setting(|| on_model_add_setting());
     app.global::<SettingsPageCallback>()
         .on_model_delete_setting(|| on_model_delete_setting());
     app.global::<SettingsPageCallback>()

@@ -25,6 +25,9 @@ export global UiSettings {
     in property <int> current-setting;
     in property <PwmSlintSetting> setting;
     in property <[string]> available-settings;
+}
+
+export global PwSettings {
     in property <InputType> HidePW: password;
     in-out property <string> urltext;
     in-out property <string> usedtext;

@@ -7,7 +7,7 @@ import { UiSettings, PwmSlintSetting } from "settings.slint";
 //import { PageCallback } from "page.slint";
 
 export global SettingsPageCallback {
-    pure callback model_add_setting(string);
+    pure callback model_add_setting();
     pure callback model_delete_setting();
     pure callback get_setting_data() -> PwmSlintSetting;
     pure callback set_setting_data(PwmSlintSetting);
@@ -20,12 +20,12 @@ export component SettingsPage inherits VerticalBox {
     //title: @tr("Settings");
     //description: @tr("This page gives an overview of the default widget set provided by Slint. The widgets are available in different styles native, fluent-(dark/light) and material-(dark/light). The widgets can be imported from \"std-widgets.slint\".");
 
-    callback add_setting(string);
+    callback add_setting();
     callback delete_setting();
     callback update_settings(PwmSlintSetting);
     callback collect_settings() -> PwmSlintSetting;
-    add_setting(string) => {
-        SettingsPageCallback.model_add_setting(string);
+    add_setting() => {
+        SettingsPageCallback.model_add_setting();
         UiSettings.available-settings = SettingsPageCallback.get_available_settings();
         UiSettings.current-setting = SettingsPageCallback.get_current_setting();
         UiSettings.setting = SettingsPageCallback.get_setting_data();
@@ -46,7 +46,7 @@ export component SettingsPage inherits VerticalBox {
             Button {
                 text: @tr("Add");
                 clicked => {
-                    add_setting(@tr("Default"))
+                    add_setting()
                 }
             }
 

@@ -2,8 +2,7 @@
 // SPDX-License-Identifier:  GPL-3.0-or-later
 
 import { Button, GroupBox, LineEdit, VerticalBox} from "std-widgets.slint";
-import { UiSettings } from "settings.slint";
-//import { Page } from "page.slint";
+import { PwSettings } from "settings.slint";
 
 export global MakePageCallback {
     pure callback url_edited(string) -> string;
@@ -12,13 +11,11 @@ export global MakePageCallback {
 }
 
 export component MakePage inherits VerticalBox {
-    //title: @tr("Controls");
-    //description: @tr("This page gives an overview of the default widget set provided by Slint. The widgets are available in different styles native, fluent-(dark/light) and material-(dark/light). The widgets can be imported from \"std-widgets.slint\".");
 
     callback set_passwords();
     set_passwords() => {
-        UiSettings.pw_created = MakePageCallback.used_text_edited(UiSettings.usedtext, UiSettings.master_pw);
-        UiSettings.pw_verification = MakePageCallback.pw_edited(UiSettings.master_pw);
+        PwSettings.pw_created = MakePageCallback.used_text_edited(PwSettings.usedtext, PwSettings.master_pw);
+        PwSettings.pw_verification = MakePageCallback.pw_edited(PwSettings.master_pw);
     }
 
     GroupBox {
@@ -30,7 +27,7 @@ export component MakePage inherits VerticalBox {
 
             url := LineEdit {
                 placeholder-text: @tr("Enter url");
-                text <=> UiSettings.urltext;
+                text <=> PwSettings.urltext;
                 edited(string) => {
                     use_text.text = MakePageCallback.url_edited(self.text);
                     set_passwords()
@@ -48,7 +45,7 @@ export component MakePage inherits VerticalBox {
 
             use_text := LineEdit {
                 placeholder-text: @tr("Override text");
-                text <=> UiSettings.usedtext;
+                text <=> PwSettings.usedtext;
                 edited(string) => {
                     set_passwords()
                 }
@@ -62,20 +59,20 @@ export component MakePage inherits VerticalBox {
 
         masterPW := LineEdit {
             placeholder-text: @tr("Master Password");
-            text <=> UiSettings.master_pw;
+            text <=> PwSettings.master_pw;
             edited(string) => {
                 set_passwords()
             }
-            input-type: UiSettings.HidePW;
+            input-type: PwSettings.HidePW;
         }
 
         Button {
             checkable: true;
             clicked => {
                 if (self.checked) {
-                    UiSettings.HidePW = InputType.text;
+                    PwSettings.HidePW = InputType.text;
                 } else {
-                    UiSettings.HidePW = InputType.password;
+                    PwSettings.HidePW = InputType.password;
                 }
             }
             text: self.checked ? @tr("Hide") : @tr("Show");
@@ -87,7 +84,7 @@ export component MakePage inherits VerticalBox {
         vertical-stretch: 0;
 
         verificationCode := LineEdit {
-            text <=> UiSettings.pw_verification;
+            text <=> PwSettings.pw_verification;
             enabled: false;
         }
     }
@@ -98,7 +95,7 @@ export component MakePage inherits VerticalBox {
 
         password := LineEdit {
             placeholder-text: @tr("Password");
-            text <=> UiSettings.pw_created;
+            text <=> PwSettings.pw_created;
             enabled: false;
         }
 
