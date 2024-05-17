@@ -16,10 +16,9 @@ export struct PwmSlintSetting {
     use_subdomain: bool,
     use_protocol: bool,
     use_params: bool,
-    use_userinfo: bool
-    }
+    use_userinfo: bool}
 
-export global UiSettings  {
+export global UiSettings {
     in property <[string]> hash-algorithms;
     in property <[string]> use-leet;
     in property <[string]> leet-level;
@@ -33,4 +32,3 @@ export global UiSettings  {
     in-out property <string> pw_created;
     in property <string> pw_verification;
 }
-

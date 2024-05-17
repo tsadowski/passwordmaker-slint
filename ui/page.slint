@@ -8,57 +8,65 @@ import { MakePage } from "make_page.slint";
 import { SettingsPage, SettingsPageCallback } from "settings_page.slint";
 
 export component Page inherits VerticalBox {
-    in property<string> title: "title";
-    in property<string> description: "description";
-    in-out property<bool> edit-settings: false;
+    in property <string> title: "title";
+    in property <string> description: "description";
+    in-out property <bool> edit-settings: false;
 
     HorizontalLayout {
         height: 60px;
         padding: 5px;
         HorizontalLayout {
-        alignment: start;
-        width: 60px;
-        Image {
-            source: @image-url("../img/ring-256x256.png");
+            alignment: start;
+            width: 60px;
+            Image {
+                source: @image-url("../img/ring-256x256.png");
+            }
         }
-    }
+
         HorizontalLayout {
             alignment: end;
 
-        Button {
-            visible: edit-settings;
-            text: @tr("Cancel");
-            clicked => { edit-settings = !edit-settings;
-                         btnEdit.text = @tr("Edit Settings");}
-                    }
-        btnEdit := Button {
-            text: @tr("Edit Settings");
-            clicked => { edit-settings = !edit-settings;
-                         if (edit-settings) { self.text = @tr("Ok");}
-                         else {self.text = @tr("Edit Settings");
-                        SettingsPageCallback.set_setting_data(UiSettings.setting);}
-                    }
-        }
-
-        // Spacer
-        Rectangle {}
-
-        ComboBox {
-            horizontal-stretch: 0;
-            current-index <=> UiSettings.current-setting;
-            model <=> UiSettings.available-settings;
-            selected(string) => {
-                UiSettings.current-setting = self.current-index;
-                SettingsPageCallback.set_current_setting(self.current-index);
-                UiSettings.setting = SettingsPageCallback.get_setting_data();
+            Button {
+                visible: edit-settings;
+                text: @tr("Cancel");
+                clicked => {
+                    edit-settings = !edit-settings;
+                    btnEdit.text = @tr("Edit Settings");
+                }
             }
-            enabled: true;
+
+            btnEdit := Button {
+                text: @tr("Edit Settings");
+                clicked => {
+                    edit-settings = !edit-settings;
+                    if (edit-settings) {
+                        self.text = @tr("Ok");
+                    } else {
+                        self.text = @tr("Edit Settings");
+                        SettingsPageCallback.set_setting_data(UiSettings.setting);
+                    }
+                }
+            }
+
+            // Spacer
+        Rectangle { }
+
+            ComboBox {
+                horizontal-stretch: 0;
+                current-index <=> UiSettings.current-setting;
+                model <=> UiSettings.available-settings;
+                selected(string) => {
+                    UiSettings.current-setting = self.current-index;
+                    SettingsPageCallback.set_current_setting(self.current-index);
+                    UiSettings.setting = SettingsPageCallback.get_setting_data();
+                }
+                enabled: true;
+            }
         }
     }
-    }
 
-    if (!edit-settings): MakePage {}
-    if (edit-settings): SettingsPage {}
+    if (!edit-settings): MakePage { }
+    if (edit-settings): SettingsPage { }
 
     @children
 }

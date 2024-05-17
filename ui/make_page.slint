@@ -1,8 +1,7 @@
 // Torsten Sadowski
 // SPDX-License-Identifier:  GPL-3.0-or-later
 
-import { Button, GroupBox, SpinBox, ComboBox, CheckBox, LineEdit, TabWidget, VerticalBox, HorizontalBox,
-    Slider, ProgressIndicator, SpinBox, Switch, Spinner, GridBox } from "std-widgets.slint";
+import { Button, GroupBox, LineEdit, VerticalBox} from "std-widgets.slint";
 import { UiSettings } from "settings.slint";
 //import { Page } from "page.slint";
 
@@ -11,7 +10,6 @@ export global MakePageCallback {
     pure callback used_text_edited(string, string) -> string;
     pure callback pw_edited(string) -> string;
 }
-
 
 export component MakePage inherits VerticalBox {
     //title: @tr("Controls");
@@ -33,8 +31,10 @@ export component MakePage inherits VerticalBox {
             url := LineEdit {
                 placeholder-text: @tr("Enter url");
                 text <=> UiSettings.urltext;
-                edited(string) => { use_text.text = MakePageCallback.url_edited(self.text);
-                                    set_passwords() }
+                edited(string) => {
+                    use_text.text = MakePageCallback.url_edited(self.text);
+                    set_passwords()
+                }
             }
         }
     }
@@ -49,7 +49,9 @@ export component MakePage inherits VerticalBox {
             use_text := LineEdit {
                 placeholder-text: @tr("Override text");
                 text <=> UiSettings.usedtext;
-                edited(string) => { set_passwords() }
+                edited(string) => {
+                    set_passwords()
+                }
             }
         }
     }
@@ -61,23 +63,24 @@ export component MakePage inherits VerticalBox {
         masterPW := LineEdit {
             placeholder-text: @tr("Master Password");
             text <=> UiSettings.master_pw;
-            edited(string) => { set_passwords() }
+            edited(string) => {
+                set_passwords()
+            }
             input-type: UiSettings.HidePW;
         }
 
         Button {
             checkable: true;
-            clicked => { if (self.checked) {
-                            UiSettings.HidePW = InputType.text;
-                            }
-                         else {
-                            UiSettings.HidePW = InputType.password;
-                         }
-                        }    
+            clicked => {
+                if (self.checked) {
+                    UiSettings.HidePW = InputType.text;
+                } else {
+                    UiSettings.HidePW = InputType.password;
+                }
+            }
             text: self.checked ? @tr("Hide") : @tr("Show");
-
         }
-}
+    }
 
     GroupBox {
         title: @tr("Master Password Verification Code");
@@ -100,12 +103,15 @@ export component MakePage inherits VerticalBox {
         }
 
         Button {
-            clicked => { password.select-all();
-                         password.copy();
-                         password.clear-selection(); }
+            clicked => {
+                password.select-all();
+                password.copy();
+                password.clear-selection();
+            }
             text: @tr("Copy");
         }
     }
+
     GroupBox {
         vertical-stretch: 1;
     }

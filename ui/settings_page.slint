@@ -40,25 +40,31 @@ export component SettingsPage inherits VerticalBox {
         vertical-stretch: 0;
         title: @tr("Profile");
 
-            HorizontalBox {
-                alignment: start;
+        HorizontalBox {
+            alignment: start;
 
-                Button {
-                    text: @tr("Add");
-                    clicked => { add_setting(@tr("Default")) }
-                }
-
-                LineEdit {
-                    placeholder-text: @tr("Profile Name");
-                    text: UiSettings.setting.name;
-                    edited => {UiSettings.setting.name = self.text}
-                }
-
-                Button {
-                    text: @tr("Delete");
-                    clicked => { delete_setting() }
+            Button {
+                text: @tr("Add");
+                clicked => {
+                    add_setting(@tr("Default"))
                 }
             }
+
+            LineEdit {
+                placeholder-text: @tr("Profile Name");
+                text: UiSettings.setting.name;
+                edited => {
+                    UiSettings.setting.name = self.text
+                }
+            }
+
+            Button {
+                text: @tr("Delete");
+                clicked => {
+                    delete_setting()
+                }
+            }
+        }
     }
 
     GroupBox {
@@ -68,132 +74,161 @@ export component SettingsPage inherits VerticalBox {
         VerticalLayout {
             padding: 0px;
 
-        HorizontalBox {
-            alignment: start;
-            padding: 0px;
+            HorizontalBox {
+                alignment: start;
+                padding: 0px;
 
-            chbProtocol := CheckBox {
-                text: @tr("Protocol");
-                checked: UiSettings.setting.use-protocol;
-                toggled => {UiSettings.setting.use-protocol = self.checked;}
-            }
-            chbSubdomain := CheckBox {
-                text: @tr("Subdomain");
-                checked: UiSettings.setting.use-subdomain;
-                toggled => {UiSettings.setting.use-subdomain = self.checked;}
-            }
-            chbDomain := CheckBox {
-                text: @tr("Domain");
-                checked: UiSettings.setting.use-domain;
-                toggled => {UiSettings.setting.use-domain = self.checked;}
-            }
-            chbUserinfo := CheckBox {
-                text: @tr("User Info");
-                checked: UiSettings.setting.use-userinfo;
-                toggled => {UiSettings.setting.use-userinfo = self.checked;}
-            }
-        }
+                chbProtocol := CheckBox {
+                    text: @tr("Protocol");
+                    checked: UiSettings.setting.use-protocol;
+                    toggled => {
+                        UiSettings.setting.use-protocol = self.checked;
+                    }
+                }
 
-        HorizontalBox {
-            chbPortPath := CheckBox {
-                text: @tr("Port, path, anchor, query parameters");
-                checked: UiSettings.setting.use-params;
-                toggled => {UiSettings.setting.use-params = self.checked;}
+                chbSubdomain := CheckBox {
+                    text: @tr("Subdomain");
+                    checked: UiSettings.setting.use-subdomain;
+                    toggled => {
+                        UiSettings.setting.use-subdomain = self.checked;
+                    }
+                }
+
+                chbDomain := CheckBox {
+                    text: @tr("Domain");
+                    checked: UiSettings.setting.use-domain;
+                    toggled => {
+                        UiSettings.setting.use-domain = self.checked;
+                    }
+                }
+
+                chbUserinfo := CheckBox {
+                    text: @tr("User Info");
+                    checked: UiSettings.setting.use-userinfo;
+                    toggled => {
+                        UiSettings.setting.use-userinfo = self.checked;
+                    }
+                }
+            }
+
+            HorizontalBox {
+                chbPortPath := CheckBox {
+                    text: @tr("Port, path, anchor, query parameters");
+                    checked: UiSettings.setting.use-params;
+                    toggled => {
+                        UiSettings.setting.use-params = self.checked;
+                    }
+                }
             }
         }
     }
-}
-
-HorizontalBox {
-GroupBox {
-    title: @tr("Use Leet");
-    vertical-stretch: 0;
 
     HorizontalBox {
-        alignment: start;
-        padding: 0px;
+        GroupBox {
+            title: @tr("Use Leet");
+            vertical-stretch: 0;
 
-        ComboBox {
-            model: UiSettings.use-leet;
-            current-value: UiSettings.setting.use-leet;
-            selected(string) => { UiSettings.setting.use-leet = string }
+            HorizontalBox {
+                alignment: start;
+                padding: 0px;
+
+                ComboBox {
+                    model: UiSettings.use-leet;
+                    current-value: UiSettings.setting.use-leet;
+                    selected(string) => {
+                        UiSettings.setting.use-leet = string
+                    }
+                }
+            }
         }
-    }
-}
 
-GroupBox {
-    title: @tr("Leet Level");
-    vertical-stretch: 0;
+        GroupBox {
+            title: @tr("Leet Level");
+            vertical-stretch: 0;
 
-    HorizontalBox {
-        alignment: start;
-        padding: 0px;
+            HorizontalBox {
+                alignment: start;
+                padding: 0px;
 
-        ComboBox {
-            model: UiSettings.leet-level;
-            current-value: UiSettings.setting.leet-level;
-            selected(string) => { UiSettings.setting.leet-level = string }
-        }
-    }
-}
-}
-
-HorizontalBox {
-GroupBox {
-    title: @tr("Hash Algo");
-    vertical-stretch: 0;
-
-    HorizontalBox {
-        alignment: start;
-        padding: 0px;
-
-        ComboBox {
-            model: UiSettings.hash-algorithms;
-            current-value: UiSettings.setting.hash-algorithm;
-            selected(string) => { UiSettings.setting.hash-algorithm = string }
-        }
-    }
-}
-
-GroupBox {
-        title: @tr("Password Length");
-        vertical-stretch: 0;
-
-        HorizontalBox {
-            alignment: start;
-            padding: 0px;
-
-            SpinBox {
-                vertical-stretch: 0;
-                value: UiSettings.setting.password-length;
-                edited(int) => { UiSettings.setting.password-length = int }
+                ComboBox {
+                    model: UiSettings.leet-level;
+                    current-value: UiSettings.setting.leet-level;
+                    selected(string) => {
+                        UiSettings.setting.leet-level = string
+                    }
+                }
             }
         }
     }
-}
 
-HorizontalBox {
-    GroupBox {
-        title: @tr("Password Prefix");
-        LineEdit {
-            text: UiSettings.setting.prefix;
-            edited => {UiSettings.setting.prefix = self.text}
+    HorizontalBox {
+        GroupBox {
+            title: @tr("Hash Algo");
+            vertical-stretch: 0;
+
+            HorizontalBox {
+                alignment: start;
+                padding: 0px;
+
+                ComboBox {
+                    model: UiSettings.hash-algorithms;
+                    current-value: UiSettings.setting.hash-algorithm;
+                    selected(string) => {
+                        UiSettings.setting.hash-algorithm = string
+                    }
+                }
+            }
+        }
+
+        GroupBox {
+            title: @tr("Password Length");
+            vertical-stretch: 0;
+
+            HorizontalBox {
+                alignment: start;
+                padding: 0px;
+
+                SpinBox {
+                    vertical-stretch: 0;
+                    value: UiSettings.setting.password-length;
+                    edited(int) => {
+                        UiSettings.setting.password-length = int
+                    }
+                }
+            }
         }
     }
-    GroupBox {
-        title: @tr("Password Suffix");
-        LineEdit {
-            text: UiSettings.setting.suffix;
-            edited => {UiSettings.setting.suffix = self.text}
+
+    HorizontalBox {
+        GroupBox {
+            title: @tr("Password Prefix");
+            LineEdit {
+                text: UiSettings.setting.prefix;
+                edited => {
+                    UiSettings.setting.prefix = self.text
+                }
+            }
+        }
+
+        GroupBox {
+            title: @tr("Password Suffix");
+            LineEdit {
+                text: UiSettings.setting.suffix;
+                edited => {
+                    UiSettings.setting.suffix = self.text
+                }
+            }
         }
     }
-}
+
     GroupBox {
         title: @tr("User Name");
         vertical-stretch: 0;
         LineEdit {
             text: UiSettings.setting.username;
-            edited => {UiSettings.setting.username = self.text}
+            edited => {
+                UiSettings.setting.username = self.text
+            }
         }
     }
 
@@ -202,7 +237,9 @@ HorizontalBox {
         vertical-stretch: 0;
         LineEdit {
             text: UiSettings.setting.modifier;
-            edited => {UiSettings.setting.modifier = self.text}
+            edited => {
+                UiSettings.setting.modifier = self.text
+            }
         }
     }
 }
