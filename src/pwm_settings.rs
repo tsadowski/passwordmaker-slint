@@ -1,8 +1,25 @@
-slint::include_modules!();
+// Torsten Sadowski
+// SPDX-License-Identifier:  GPL-3.0-or-later
 
 use once_cell::sync::Lazy;
+use passwordmaker_rs::SettingsError;
 use serde::{Deserialize, Serialize};
 use slint::SharedString;
+use strum::ParseError;
+use strum_macros::Display;
+
+pub enum LeetError {
+    ParseLeetLevelError,
+    ParseUseLeetError,
+}
+
+#[derive(Display)]
+pub enum PwmSettingsError {
+    Ok,
+    HashAlgorithmError { error: ParseError },
+    LeetError { error: LeetError },
+    SettingsError { error: SettingsError },
+}
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct PwmSetting {
