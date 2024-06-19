@@ -9,7 +9,7 @@ build = "build.rs"
 [dependencies]
 slint = "1.4.1"
 #passwordmaker-rs = "0.2.1"
-passwordmaker-rs = { path = "../passwordmaker-rs" }
+passwordmaker-rs = { path = "../passwordmaker-rs", features = ["strum"] }
 serde = { version = "1.0", features = ["derive"] }
 strum = "0.26.0"
 strum_macros = "0.26.0"
